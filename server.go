@@ -19,7 +19,9 @@ func uploadlocal(files []FILES) {
 
 	mux.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(files)
+		if err := json.NewEncoder(w).Encode(files); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	})
 
 	mux.HandleFunc("/download", func(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +54,10 @@ func uploadlocal(files []FILES) {
 		fmt.Println("Press ENTER to stop hosting")
 
 		reader := bufio.NewReader(os.Stdin)
-		_, _ = reader.ReadString('\n')
+		_, err := reader.ReadString('\n')
+		if err != nil && err != io.EOF {
+			fmt.Println("Error reading input:", err)
+		}
 		close(stop)
 	}()
 
@@ -70,7 +75,9 @@ func uploadlocal(files []FILES) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	server.Shutdown(ctx)
+	if err := server.Shutdown(ctx); err != nil {
+		fmt.Println("Error shutting down server:", err)
+	}
 	fmt.Println("Server stopped")
 }
 
@@ -106,6 +113,10 @@ func startServeo() (string, error) {
 				}
 			}
 		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", err
 	}
 
 	return "", fmt.Errorf("could not get public URL")
