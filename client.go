@@ -11,12 +11,10 @@ import (
 )
 
 func searchfiles(data []FILES, value string) int {
-	index := 0
-	for _, entry := range data {
+	for index, entry := range data {
 		if entry.Name == value {
 			return index
 		}
-		index = index + 1
 	}
 	return -1
 }
@@ -63,27 +61,46 @@ func add(files []FILES, filename string, path string) {
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Printf("Name: ")
-	new_name, _ := reader.ReadString('\n')
-	new_name = strings.TrimSpace(new_name)
+	name, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Error reading name:", err)
+		return
+	}
+	name = strings.TrimSpace(name)
 
 	fmt.Printf("Description: ")
-	new_desc, _ := reader.ReadString('\n')
-	new_desc = strings.TrimSpace(new_desc)
+	desc, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Error reading description:", err)
+		return
+	}
+	desc = strings.TrimSpace(desc)
 
 	fmt.Printf("Class: ")
-	new_class, _ := reader.ReadString('\n')
-	new_class = strings.TrimSpace(new_class)
+	class, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Error reading class:", err)
+		return
+	}
+	class = strings.TrimSpace(class)
 
 	entry := FILES{
-		Name:  new_name,
-		Desc:  new_desc,
-		Class: new_class,
+		Name:  name,
+		Desc:  desc,
+		Class: class,
 		Path:  path,
 	}
 
 	files = append(files, entry)
-	dataBytes, _ := json.Marshal(files)
-	_ = os.WriteFile(filename, dataBytes, 0644)
+	dataBytes, err := json.Marshal(files)
+	if err != nil {
+		fmt.Println("Error encoding files:", err)
+		return
+	}
+	if err := os.WriteFile(filename, dataBytes, 0644); err != nil {
+		fmt.Println("Error saving files:", err)
+		return
+	}
 }
 
 func remove(files []FILES, filename string, value string) {
@@ -93,8 +110,15 @@ func remove(files []FILES, filename string, value string) {
 		os.Exit(0)
 	}
 	files = append(files[:index], files[index+1:]...)
-	dataBytes, _ := json.Marshal(files)
-	_ = os.WriteFile(filename, dataBytes, 0644)
+	dataBytes, err := json.Marshal(files)
+	if err != nil {
+		fmt.Println("Error encoding files:", err)
+		return
+	}
+	if err := os.WriteFile(filename, dataBytes, 0644); err != nil {
+		fmt.Println("Error saving files:", err)
+		return
+	}
 	fmt.Println("File Removed Succesfully")
 }
 
@@ -107,9 +131,18 @@ func delete(files []FILES, filename string, value string) {
 
 	path := files[index].Path
 	files = append(files[:index], files[index+1:]...)
-	dataBytes, _ := json.Marshal(files)
-	_ = os.WriteFile(filename, dataBytes, 0644)
-	os.Remove(path)
+	dataBytes, err := json.Marshal(files)
+	if err != nil {
+		fmt.Println("Error encoding files:", err)
+		return
+	}
+	if err := os.WriteFile(filename, dataBytes, 0644); err != nil {
+		fmt.Println("Error saving files:", err)
+		return
+	}
+	if err := os.Remove(path); err != nil {
+		fmt.Println("Error deleting file:", err)
+		return
+	}
 	fmt.Println("File Removed and Deleted Succesfully")
-
 }

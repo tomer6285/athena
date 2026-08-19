@@ -15,24 +15,37 @@ type FILES struct {
 
 func main() {
 	//Check if files exist and creates them if needed
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("Error getting home directory:", err)
+		os.Exit(1)
+	}
 	path := (home + "/.config/athena")
 	file := (path + "/files.json")
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		os.Mkdir(path, os.ModePerm)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			fmt.Println("Error creating directory:", err)
+			os.Exit(1)
+		}
 	}
-	_, err = os.Stat(file)
-	if os.IsNotExist(err) {
-		f, _ := os.Create(file)
-		f.WriteString("[]")
-		f.Close()
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		if err := os.WriteFile(file, []byte("[]"), 0644); err != nil {
+			fmt.Println("Error creating file:", err)
+			os.Exit(1)
+		}
 	}
 
 	//Reads files into memory
-	read, _ := os.ReadFile(file)
+	read, err := os.ReadFile(file)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		os.Exit(1)
+	}
 	var files []FILES
-	_ = json.Unmarshal(read, &files)
+	if err := json.Unmarshal(read, &files); err != nil {
+		fmt.Println("Error parsing json:", err)
+		os.Exit(1)
+	}
 
 	if len(os.Args) < 2 {
 		fmt.Println("Athena Commands:")
@@ -75,10 +88,36 @@ func main() {
 			os.Exit(0)
 		}
 		remove(files, file, os.Args[2])
-		read, _ := os.ReadFile(file)
-		var files []FILES
-		_ = json.Unmarshal(read, &files)
-		list(files)
+		read, err := os.ReadFile(file)
+		if err != nil {
+			fmt.Println("Error reading file:", err)
+			os.Exit(1)
+		}
+		var updatedFiles []FILES
+		if err := json.Unmarshal(read, &updatedFiles); err != nil {
+			fmt.Println("Error parsing json:", err)
+			os.Exit(1)
+		}
+		list(updatedFiles)
+	}
+
+	if os.Args[1] == "delete" {
+		if len(os.Args) < 3 {
+			fmt.Println("Error, please provide a file to delete")
+			os.Exit(0)
+		}
+		delete(files, file, os.Args[2])
+		read, err := os.ReadFile(file)
+		if err != nil {
+			fmt.Println("Error reading file:", err)
+			os.Exit(1)
+		}
+		var updatedFiles []FILES
+		if err := json.Unmarshal(read, &updatedFiles); err != nil {
+			fmt.Println("Error parsing json:", err)
+			os.Exit(1)
+		}
+		list(updatedFiles)
 	}
 
 	if os.Args[1] == "upload-local" {
