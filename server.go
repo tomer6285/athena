@@ -143,6 +143,16 @@ func download(ip, filename string) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound {
+		fmt.Println("Error: File does not exist")
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Error: Server returned", resp.Status)
+		return
+	}
+
 	cd := resp.Header.Get("Content-Disposition")
 	var name string
 	if cd != "" {
