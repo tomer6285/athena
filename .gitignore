@@ -1,2 +1,3 @@
-athena
+bin/
 **.md
+!README.md

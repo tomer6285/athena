@@ -195,5 +195,5 @@ func search(ip string) {
 
 	// Reuse your existing printer
 	fmt.Println("Files from", ip)
-	list(remoteFiles)
+	list(remoteFiles, "", "")
 }
