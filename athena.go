@@ -141,9 +141,6 @@ func main() {
 	case "upload-local":
 		uploadlocal(files)
 
-	case "upload-out":
-		uploadout(files)
-
 	case "search":
 		if len(os.Args) < 3 {
 			fmt.Println("Error, please provide the ip address you want to index")
